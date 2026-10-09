@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мои дела</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#1e1f24; --surface:#26272e; --surface-2:#2d2f38; --card:#212228;
+  --border:#3a3c46; --border-soft:#2f313a;
+  --text:#e8e9ee; --muted:#a2a5b2; --faint:#6f7280;
+  --accent:#ffffff; --link:#ffffff; --on-accent:#1e1f24; --danger:#ff6b6b;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.4 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+input{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;outline:none}
+input:focus{border-color:var(--link)}
+:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+header{display:flex;align-items:center;gap:6px;padding:0 16px;border-bottom:1px solid var(--border)}
+.title{font-size:17px;font-weight:600;margin-right:14px;padding:12px 0;cursor:text}
+.tab{display:inline-flex;align-items:center;gap:7px;padding:13px 8px 12px;font-size:15px;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.tab:hover:not(.active){color:#fff}
+.spacer{flex:1}
+.icon-btn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:6px;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+
+main{flex:1;min-height:0;overflow:auto;padding:20px 16px 40px}
+
+/* list */
+.list{max-width:760px;margin:0 auto}
+.new{display:flex;align-items:center;gap:10px;padding:4px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);margin-bottom:16px}
+.new:focus-within{border-color:var(--link)}
+.new svg{color:var(--muted)}
+.new input{flex:1;border:0;background:none;padding:9px 0}
+.rows{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:12px;padding:9px 10px;border-bottom:1px solid var(--border-soft);border-radius:6px}
+.row:hover{background:var(--surface)}
+.check{width:20px;height:20px;border:1px solid var(--muted);border-radius:4px;display:grid;place-items:center;flex:none;color:transparent}
+.check svg{width:13px;height:13px;stroke-width:2.6}
+.check:hover{border-color:var(--text);color:var(--faint)}
+.row.done .check{background:var(--link);border-color:var(--link);color:var(--on-accent)}
+.name{flex:1;min-width:0;word-break:break-word;cursor:text}
+.row.done .name{color:var(--muted);text-decoration:line-through}
+.name-edit{flex:1;padding:4px 8px}
+.date{font-size:13px;color:var(--muted);white-space:nowrap;padding:3px 8px;border-radius:4px}
+.date:hover{background:var(--surface-2);color:var(--text)}
+.date.today{color:var(--text);font-weight:600}
+.date.overdue{color:var(--danger)}
+.set-date,.del{opacity:0}
+.row:hover .set-date,.row:hover .del,.row:focus-within .set-date,.row:focus-within .del{opacity:1}
+.del:hover{color:var(--danger)}
+.section{display:flex;align-items:center;gap:8px;margin:22px 0 6px;color:var(--muted);font-size:14px;padding:4px 6px;border-radius:4px}
+.section:hover{color:var(--text)}
+.section svg{transition:transform .15s}
+.section.open svg{transform:rotate(90deg)}
+.empty{color:var(--faint);padding:24px 10px;text-align:center}
+.date-input{padding:3px 6px;font-size:13px;color-scheme:dark}
+.sync{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;font-weight:500;margin-right:4px;white-space:nowrap}
+.sync:hover{background:var(--surface)}
+.sync.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding:8vh 12px;z-index:70;overflow:auto}
+.overlay.open{display:flex}
+.dialog{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:22px}
+.dialog h3{margin:0 0 10px;font-size:18px}
+.dialog p,.dialog li{color:var(--muted);font-size:14px;line-height:1.55}
+.dialog ol{padding-left:20px;margin:8px 0 14px}
+.dialog code{background:var(--card);border:1px solid var(--border-soft);border-radius:4px;padding:1px 5px;font-size:12.5px;color:var(--text)}
+.dialog .foot{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:500}
+.btn-primary:hover{background:#dcdde2}
+
+/* calendar */
+.cal{max-width:1200px;margin:0 auto}
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.cal-head h2{margin:0 6px;font-size:19px;font-weight:600;min-width:170px}
+.btn{height:30px;padding:0 12px;border:1px solid var(--border);border-radius:6px;font-size:14px}
+.btn:hover{background:var(--surface)}
+.grid-wrap{overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));border-top:1px solid var(--border);border-left:1px solid var(--border);min-width:770px}
+.dow{padding:6px 8px;color:var(--muted);font-size:13px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cell{min-height:112px;padding:6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;position:relative}
+.cell.other{background:rgba(0,0,0,.18)}
+.cell.other .num{color:var(--faint)}
+.num{font-size:13px;align-self:flex-start;padding:0 5px;border-radius:4px}
+.cell.today .num{background:var(--accent);color:var(--on-accent);font-weight:600}
+.cell .add{position:absolute;top:3px;right:3px;width:24px;height:24px;opacity:0}
+.cell:hover .add{opacity:1}
+.item{font-size:12.5px;padding:3px 7px;border-radius:4px;background:var(--surface-2);border-left:3px solid var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;cursor:grab}
+.item.done{text-decoration:line-through;color:var(--muted);border-left-color:var(--faint)}
+.cell input{font-size:12.5px;padding:3px 6px}
+.hint{color:var(--faint);font-size:13px;margin-top:10px}
+.cal-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;max-width:1440px;margin:0 auto;align-items:start}
+.side{position:sticky;top:0;border:1px solid var(--border);border-radius:8px;background:var(--card);padding:12px;display:flex;flex-direction:column;gap:6px;min-height:160px}
+.side h3{margin:2px 2px 6px;font-size:15px;font-weight:600;display:flex;justify-content:space-between}
+.side h3 span{color:var(--muted);font-weight:400}
+.side input{width:100%;margin-bottom:6px}
+.side .empty{padding:14px 4px;font-size:13px;text-align:left}
+.side.over,.cell.over{outline:1px dashed var(--text);outline-offset:-1px}
+.side.over{background:var(--surface)}
+.drag-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border-soft);border-radius:6px;background:var(--surface);cursor:grab;font-size:14px;word-break:break-word}
+.drag-item svg{color:var(--faint);width:14px;height:14px}
+.drag-item:hover{border-color:var(--border)}
+.drag-item,.item{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.lifted{opacity:.3}
+.ghost{position:fixed;z-index:80;pointer-events:none;margin:0;opacity:.95;box-shadow:0 12px 30px rgba(0,0,0,.5);transform:rotate(1.5deg)}
+body.dragging,body.dragging *{cursor:grabbing!important}
+body.dragging{user-select:none}
+@media (max-width:860px){ .cal-layout{grid-template-columns:1fr} .side{position:static} }
+
+.menu{position:fixed;z-index:50;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.menu button{display:block;width:100%;padding:7px 10px;border-radius:4px;text-align:left;font-size:14px}
+.menu button:hover{background:var(--surface-2)}
+.menu .note{padding:6px 10px;font-size:12px;color:var(--faint);max-width:250px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);padding:9px 16px;border-radius:6px;display:none;z-index:60}
+.toast.show{display:block}
+@media (max-width:600px){ .set-date,.del{opacity:1} .title{display:none} .sync span{display:none} }
+</style>
+</head>
+<body>
+<header>
+  <span class="title" id="title" title="Нажмите, чтобы переименовать"></span>
+  <button class="tab" data-view="list"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/></svg>Список</button>
+  <button class="tab" data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календарь</button>
+  <div class="spacer"></div>
+  <button class="sync" id="syncBtn"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4"/></svg><span>Синхронизировать с календарём</span></button>
+  <button class="icon-btn" id="moreBtn" title="Данные"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg></button>
+</header>
+<main id="main"></main>
+<div class="overlay" id="setup"><div class="dialog" role="dialog" aria-modal="true" aria-label="Подключение Google Календаря">
+  <h3>Подключите Google Календарь</h3>
+  <p>Для синхронизации нужен Client ID от Google. Настройка делается один раз:</p>
+  <ol>
+    <li>Откройте <code>console.cloud.google.com</code>, создайте проект и включите <b>Google Calendar API</b>.</li>
+    <li>В разделе «OAuth consent screen» выберите External, а в Test users добавьте свою почту.</li>
+    <li>В «Credentials» создайте <b>OAuth client ID</b> типа Web application. В «Authorized JavaScript origins» укажите адрес сайта, например <code>https://username.github.io</code>.</li>
+    <li>Скопируйте Client ID и вставьте его в начало скрипта в <code>index.html</code>: <code>const GOOGLE_CLIENT_ID = '...'</code>.</li>
+  </ol>
+  <p>Пока Client ID не указан, можно выгрузить все задачи со сроками файлом .ics и импортировать его в Google Календарь вручную (Настройки → Импорт и экспорт).</p>
+  <div class="foot"><button class="btn" id="setupClose">Закрыть</button><button class="btn btn-primary" id="icsBtn">Скачать .ics</button></div>
+</div></div>
+<input type="file" id="importFile" accept="application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+const I={
+  check:'<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  cal:'<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  chevL:'<svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg>',
+  chevR:'<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
+};
+// Вставьте сюда Client ID из Google Cloud Console (см. окно «Подключите Google Календарь»)
+const GOOGLE_CLIENT_ID = '';
+
+const KEY='tasks-simple-v1';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+function load(){
+  try{ const raw=localStorage.getItem(KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  // перенос задач из прошлой версии доски, если она открывалась в этом браузере
+  try{
+    const old=JSON.parse(localStorage.getItem('kanban-tracker-v1'));
+    if(old && old.cards){
+      const doneCols=old.columns.filter(c=>c.kind==='done').map(c=>c.id);
+      return {title:old.title||'Мои дела',view:'list',month:null,showDone:false,
+        tasks:old.cards.map(c=>({id:c.id,title:c.title,due:c.due||'',done:doneCols.includes(c.col)}))};
+    }
+  }catch(e){}
+  return {title:'Мои дела',view:'list',month:null,showDone:false,tasks:[{id:uid(),title:'Сдать теорию графов',due:'',done:false}]};
+}
+let S=load();
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+function commit(){ save(); render(); }
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2000); }
+
+function dateLabel(s){
+  if(!s) return '';
+  const t=new Date(); const today=ymd(t);
+  const tm=new Date(t); tm.setDate(t.getDate()+1);
+  if(s===today) return 'Сегодня';
+  if(s===ymd(tm)) return 'Завтра';
+  const [y,m,d]=s.split('-').map(Number);
+  const opt={day:'numeric',month:'short'}; if(y!==t.getFullYear()) opt.year='numeric';
+  return new Date(y,m-1,d).toLocaleDateString('ru-RU',opt);
+}
+function pickDate(task, btn){
+  const inp=document.createElement('input'); inp.type='date'; inp.className='date-input'; inp.value=task.due||'';
+  inp.setAttribute('aria-label','Срок задачи');
+  btn.replaceWith(inp); inp.focus();
+  try{ inp.showPicker(); }catch(e){}
+  let saved=false;
+  inp.onchange=()=>{ if(inp.value===task.due) return; task.due=inp.value; saved=true; commit(); };
+  inp.onkeydown=e=>{ if(e.key==='Escape'||e.key==='Enter') render(); };
+  inp.onblur=()=>setTimeout(()=>{ if(!saved && document.body.contains(inp)) render(); },200);
+}
+
+/* ---------- list ---------- */
+function row(t){
+  const el=document.createElement('div'); el.className='row'+(t.done?' done':'');
+  const today=ymd(new Date());
+  const cls=t.due===today?' today':(t.due&&t.due<today&&!t.done?' overdue':'');
+  el.innerHTML=`<button class="check" title="${t.done?'Вернуть в работу':'Выполнено'}">${I.check}</button>
+    <span class="name">${esc(t.title)}</span>
+    ${t.due?`<button class="date${cls}" title="Изменить срок">${dateLabel(t.due)}</button>`:''}
+    <button class="icon-btn del" title="Удалить">${I.x}</button>`;
+  el.querySelector('.check').onclick=()=>{ t.done=!t.done; commit(); };
+  el.querySelector('.date')?.addEventListener('click',e=>pickDate(t,e.currentTarget));
+  el.querySelector('.del').onclick=()=>{ if(t.gid){ (S.gTrash=S.gTrash||[]).push(t.gid); } S.tasks=S.tasks.filter(x=>x!==t); commit(); toast('Задача удалена'); };
+  el.querySelector('.name').onclick=e=>{
+    const inp=document.createElement('input'); inp.className='name-edit'; inp.value=t.title;
+    e.target.replaceWith(inp); inp.focus(); inp.select();
+    const fin=ok=>{ if(ok && inp.value.trim()) t.title=inp.value.trim(); commit(); };
+    inp.onkeydown=k=>{ if(k.key==='Enter') fin(true); if(k.key==='Escape') fin(false); };
+    inp.onblur=()=>fin(true);
+  };
+  return el;
+}
+function renderList(main){
+  const wrap=document.createElement('div'); wrap.className='list';
+  wrap.innerHTML=`<label class="new">${I.plus}<input id="newTask" placeholder="Новая задача — Enter, чтобы добавить"></label><div class="rows" id="open"></div>`;
+  if(S.tasks.some(t=>!t.done&&!t.due)) wrap.querySelector('.new').insertAdjacentHTML('afterend','<p class="hint" style="margin:-8px 2px 12px">Чтобы назначить срок, откройте «Календарь» и перетащите задачу на нужный день.</p>');
+  const open=S.tasks.filter(t=>!t.done), done=S.tasks.filter(t=>t.done);
+  const box=wrap.querySelector('#open');
+  if(!open.length) box.innerHTML=`<div class="empty">Нет активных задач. Добавьте первую в поле выше.</div>`;
+  open.forEach(t=>box.appendChild(row(t)));
+  if(done.length){
+    const sec=document.createElement('button'); sec.className='section'+(S.showDone?' open':'');
+    sec.innerHTML=`${I.chevR}Выполнено ${done.length}`;
+    sec.onclick=()=>{ S.showDone=!S.showDone; commit(); };
+    wrap.appendChild(sec);
+    if(S.showDone){ const r=document.createElement('div'); r.className='rows'; done.forEach(t=>r.appendChild(row(t))); wrap.appendChild(r); }
+  }
+  const inp=wrap.querySelector('#newTask');
+  inp.onkeydown=e=>{ if(e.key==='Enter' && inp.value.trim()){ S.tasks.push({id:uid(),title:inp.value.trim(),due:'',done:false}); commit(); $('#newTask').focus(); } };
+  main.appendChild(wrap);
+}
+
+/* ---------- calendar ---------- */
+const GRIP='<svg viewBox="0 0 24 24"><circle cx="9" cy="6" r="1" fill="currentColor"/><circle cx="15" cy="6" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="18" r="1" fill="currentColor"/><circle cx="15" cy="18" r="1" fill="currentColor"/></svg>';
+
+function renderCalendar(main){
+  const now=new Date();
+  const base=S.month?new Date(S.month+'-01T00:00'):new Date(now.getFullYear(),now.getMonth(),1);
+  const y=base.getFullYear(), m=base.getMonth();
+  const layout=document.createElement('div'); layout.className='cal-layout';
+
+  // боковая панель: задачи без срока
+  const side=document.createElement('aside'); side.className='side'; side.dataset.drop='';
+  const undated=S.tasks.filter(t=>!t.done&&!t.due);
+  side.innerHTML=`<h3>Без срока <span>${undated.length}</span></h3><input placeholder="Новая задача — Enter">`;
+  if(!undated.length) side.insertAdjacentHTML('beforeend','<div class="empty">Все задачи распределены. Перетащите задачу из календаря сюда, чтобы убрать срок.</div>');
+  undated.forEach(t=>{
+    const it=document.createElement('div'); it.className='drag-item'; it.innerHTML=`${GRIP}<span>${esc(t.title)}</span>`;
+    draggable(it,t); side.appendChild(it);
+  });
+  const ni=side.querySelector('input');
+  ni.onkeydown=e=>{ if(e.key==='Enter'&&ni.value.trim()){ S.tasks.push({id:uid(),title:ni.value.trim(),due:'',done:false}); commit(); main.querySelector('.side input')?.focus(); } };
+  layout.appendChild(side);
+
+  const wrap=document.createElement('div'); wrap.className='cal';
+  const label=base.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+  wrap.innerHTML=`<div class="cal-head"><button class="icon-btn" data-m="-1" title="Предыдущий месяц">${I.chevL}</button>
+    <button class="icon-btn" data-m="1" title="Следующий месяц">${I.chevR}</button>
+    <h2>${label[0].toUpperCase()+label.slice(1)}</h2><button class="btn" data-m="0">Сегодня</button></div>
+    <div class="grid-wrap"><div class="grid"></div></div>
+    <p class="hint">Перетащите задачу на день, чтобы назначить срок, или обратно в «Без срока», чтобы убрать его. На телефоне задержите палец на задаче, затем тяните. Нажатие на задачу в календаре отмечает её выполненной.</p>`;
+  wrap.querySelector('.cal-head').onclick=e=>{ const bt=e.target.closest('[data-m]'); if(!bt) return; const v=+bt.dataset.m;
+    const d=v===0?new Date(now.getFullYear(),now.getMonth(),1):new Date(y,m+v,1); S.month=`${d.getFullYear()}-${pad(d.getMonth()+1)}`; commit(); };
+  const grid=wrap.querySelector('.grid');
+  ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d=>grid.insertAdjacentHTML('beforeend',`<div class="dow">${d}</div>`));
+  const start=new Date(y,m,1-((new Date(y,m,1).getDay()+6)%7)); const today=ymd(now);
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const key=ymd(d);
+    const cell=document.createElement('div'); cell.className='cell'+(d.getMonth()!==m?' other':'')+(key===today?' today':'');
+    cell.dataset.drop=key;
+    cell.innerHTML=`<span class="num">${d.getDate()}</span><button class="icon-btn add" title="Задача на этот день">${I.plus}</button>`;
+    S.tasks.filter(t=>t.due===key).forEach(t=>{
+      const it=document.createElement('button'); it.className='item'+(t.done?' done':''); it.textContent=t.title; it.title=t.title;
+      it.onclick=()=>{ if(justDropped) return; t.done=!t.done; commit(); };
+      draggable(it,t); cell.appendChild(it);
+    });
+    cell.querySelector('.add').onclick=()=>{
+      const inp=document.createElement('input'); inp.placeholder='Название'; cell.appendChild(inp); inp.focus();
+      inp.onkeydown=e=>{ if(e.key==='Enter'&&inp.value.trim()){ S.tasks.push({id:uid(),title:inp.value.trim(),due:key,done:false}); commit(); } if(e.key==='Escape') render(); };
+      inp.onblur=()=>setTimeout(render,100);
+    };
+    grid.appendChild(cell);
+  }
+  layout.appendChild(wrap);
+  main.appendChild(layout);
+}
+
+/* ---------- перетаскивание (мышь и сенсорный экран) ---------- */
+let drag=null, justDropped=false, overEl=null;
+function draggable(el, task){
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0) return;
+    drag={task,el,sx:e.clientX,sy:e.clientY,x:e.clientX,y:e.clientY,started:false,touch:e.pointerType!=='mouse'};
+    if(drag.touch) drag.timer=setTimeout(()=>{ if(drag&&!drag.started){ navigator.vibrate?.(15); startDrag(); } },260);
+  });
+  el.addEventListener('dragstart',e=>e.preventDefault());
+}
+function startDrag(){
+  drag.started=true;
+  const r=drag.el.getBoundingClientRect();
+  drag.ox=drag.sx-r.left; drag.oy=drag.sy-r.top;
+  const g=drag.el.cloneNode(true); g.classList.add('ghost'); g.style.width=r.width+'px';
+  document.body.appendChild(g); drag.ghost=g;
+  drag.el.classList.add('lifted'); document.body.classList.add('dragging');
+  moveDrag(drag.x,drag.y);
+}
+function moveDrag(x,y){
+  drag.ghost.style.left=(x-drag.ox)+'px'; drag.ghost.style.top=(y-drag.oy)+'px';
+  const t=document.elementFromPoint(x,y)?.closest('[data-drop]');
+  if(t!==overEl){ overEl?.classList.remove('over'); overEl=t; overEl?.classList.add('over'); }
+  // автопрокрутка у краёв
+  const main=$('#main'), mr=main.getBoundingClientRect();
+  if(y<mr.top+40) main.scrollTop-=12; else if(y>mr.bottom-40) main.scrollTop+=12;
+  const gw=document.elementFromPoint(x,y)?.closest('.grid-wrap');
+  if(gw){ const gr=gw.getBoundingClientRect(); if(x<gr.left+30) gw.scrollLeft-=12; else if(x>gr.right-30) gw.scrollLeft+=12; }
+}
+function endDrag(apply){
+  if(!drag) return;
+  clearTimeout(drag.timer);
+  if(drag.started){
+    drag.ghost.remove(); drag.el.classList.remove('lifted'); document.body.classList.remove('dragging');
+    overEl?.classList.remove('over');
+    if(apply && overEl){ const v=overEl.dataset.drop; if(v!==drag.task.due){ drag.task.due=v; drag.task.done=v?drag.task.done:false; commit(); toast(v?'Срок: '+dateLabel(v):'Срок убран'); } }
+    justDropped=true; setTimeout(()=>justDropped=false,50);
+  }
+  overEl=null; drag=null;
+}
+document.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  drag.x=e.clientX; drag.y=e.clientY;
+  if(!drag.started){
+    const dist=Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy);
+    if(drag.touch){ if(dist>8){ clearTimeout(drag.timer); drag=null; } return; }
+    if(dist<5) return;
+    startDrag();
+  }
+  moveDrag(e.clientX,e.clientY);
+});
+document.addEventListener('pointerup',()=>endDrag(true));
+document.addEventListener('pointercancel',()=>endDrag(false));
+document.addEventListener('touchmove',e=>{ if(drag&&drag.started) e.preventDefault(); },{passive:false});
+document.addEventListener('contextmenu',e=>{ if(drag) e.preventDefault(); });
+
+/* ---------- Google Календарь ---------- */
+let gToken=null, gExp=0, tokenClient=null, syncing=false;
+function initGoogle(){
+  if(!GOOGLE_CLIENT_ID) return;
+  const sc=document.createElement('script'); sc.src='https://accounts.google.com/gsi/client'; sc.async=true;
+  sc.onload=()=>{
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:GOOGLE_CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/calendar.events',
+      callback:r=>{ if(r.error){ toast('Google не дал доступ: '+r.error); return; } gToken=r.access_token; gExp=Date.now()+(r.expires_in-60)*1000; runSync(); },
+      error_callback:e=>toast(e.type==='popup_closed'?'Окно входа закрыто':'Не удалось открыть вход Google: разрешите всплывающие окна'),
+    });
+  };
+  sc.onerror=()=>toast('Не удалось загрузить скрипт Google — проверьте интернет');
+  document.head.appendChild(sc);
+}
+async function gcal(method,path,body){
+  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events'+path,{method,
+    headers:{Authorization:'Bearer '+gToken,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  if(r.status===404||r.status===410) return null;
+  if(r.status===401){ gToken=null; throw new Error('auth'); }
+  if(!r.ok) throw new Error('Google ответил ошибкой '+r.status);
+  return r.status===204?{}:r.json();
+}
+async function runSync(){
+  if(syncing) return; syncing=true; $('#syncBtn').classList.add('busy');
+  let n=0;
+  try{
+    for(const id of (S.gTrash||[])) await gcal('DELETE','/'+id).catch(()=>{});
+    S.gTrash=[];
+    for(const t of S.tasks){
+      if(!t.due){ if(t.gid){ await gcal('DELETE','/'+t.gid).catch(()=>{}); delete t.gid; } continue; }
+      const end=new Date(t.due+'T00:00'); end.setDate(end.getDate()+1);
+      const body={summary:(t.done?'✓ ':'')+t.title,start:{date:t.due},end:{date:ymd(end)},status:'confirmed',
+        transparency:'transparent',extendedProperties:{private:{tasksApp:'1'}}};
+      let ev=t.gid?await gcal('PATCH','/'+t.gid,body):null;
+      if(!ev) ev=await gcal('POST','',body);
+      t.gid=ev.id; n++;
+    }
+    S.lastSync=Date.now(); save(); render();
+    toast(n?`Готово: задач в Google Календаре — ${n}`:'Нет задач со сроком — нечего отправлять');
+  }catch(e){
+    save(); render();
+    toast(e.message==='auth'?'Вход истёк — нажмите «Синхронизировать» ещё раз':e.message);
+  }finally{ syncing=false; $('#syncBtn').classList.remove('busy'); }
+}
+function downloadIcs(){
+  const esc2=x=>x.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const ev=S.tasks.filter(t=>t.due).map(t=>{ const e=new Date(t.due+'T00:00'); e.setDate(e.getDate()+1);
+    return ['BEGIN:VEVENT',`UID:${t.id}@tasks`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${t.due.replace(/-/g,'')}`,`DTEND;VALUE=DATE:${ymd(e).replace(/-/g,'')}`,`SUMMARY:${esc2((t.done?'✓ ':'')+t.title)}`,'TRANSP:TRANSPARENT','END:VEVENT'].join('\r\n'); });
+  if(!ev.length){ toast('Нет задач со сроком'); return; }
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Moi dela//RU',...ev,'END:VCALENDAR'].join('\r\n');
+  const l=document.createElement('a'); l.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'})); l.download='tasks.ics'; l.click(); URL.revokeObjectURL(l.href);
+  toast('Файл tasks.ics сохранён');
+}
+$('#syncBtn').onclick=()=>{
+  if(!GOOGLE_CLIENT_ID){ $('#setup').classList.add('open'); return; }
+  if(!tokenClient){ toast('Google ещё загружается, попробуйте через секунду'); return; }
+  if(gToken && Date.now()<gExp) runSync(); else tokenClient.requestAccessToken();
+};
+$('#setupClose').onclick=()=>$('#setup').classList.remove('open');
+$('#setup').onclick=e=>{ if(e.target.id==='setup') $('#setup').classList.remove('open'); };
+$('#icsBtn').onclick=()=>{ downloadIcs(); $('#setup').classList.remove('open'); };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#setup').classList.remove('open'); });
+initGoogle();
+
+/* ---------- menu & header ---------- */
+let menu=null;
+function closeMenu(){ menu?.remove(); menu=null; }
+document.addEventListener('click',e=>{ if(menu&&!menu.contains(e.target)) closeMenu(); });
+$('#moreBtn').onclick=e=>{
+  e.stopPropagation(); closeMenu();
+  menu=document.createElement('div'); menu.className='menu';
+  menu.innerHTML=`<button data-a="exp">Экспорт в JSON</button><button data-a="imp">Импорт из JSON…</button>
+    <div class="note">Задачи хранятся в этом браузере. Для переноса на другое устройство сделайте экспорт и импортируйте файл там.</div>`;
+  menu.onclick=ev=>{ const a=ev.target.closest('[data-a]')?.dataset.a; if(!a) return; closeMenu();
+    if(a==='exp'){ const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}); const l=document.createElement('a'); l.href=URL.createObjectURL(b); l.download=`tasks-${ymd(new Date())}.json`; l.click(); URL.revokeObjectURL(l.href); }
+    if(a==='imp') $('#importFile').click(); };
+  document.body.appendChild(menu);
+  const r=e.currentTarget.getBoundingClientRect(); menu.style.top=r.bottom+4+'px'; menu.style.left=Math.max(8,r.right-menu.offsetWidth)+'px';
+};
+$('#importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{ const d=JSON.parse(t); if(!Array.isArray(d.tasks)) throw 0; S=d; commit(); toast('Задачи загружены'); })
+   .catch(()=>toast('Файл не подходит: нужен JSON, сохранённый этим списком'));
+  e.target.value='';
+};
+$('#title').onclick=()=>{ const n=prompt('Название',S.title); if(n&&n.trim()){ S.title=n.trim(); commit(); } };
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ S.view=t.dataset.view; commit(); });
+
+function render(){
+  document.title=S.title; $('#title').textContent=S.title;
+  $('#syncBtn').title=S.lastSync?'Последняя синхронизация: '+new Date(S.lastSync).toLocaleString('ru-RU'):'Отправить задачи со сроком в Google Календарь';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===S.view));
+  const main=$('#main'); main.innerHTML='';
+  (S.view==='calendar'?renderCalendar:renderList)(main);
+}
+render();
+</script>
+</body>
+</html>
